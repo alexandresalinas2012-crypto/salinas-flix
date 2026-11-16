@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SALINASFLIX</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --prata-fundo: #ECEFF4;
+    --prata-card: #F8FAFC;
+    --prata-borda: #D8DEE9;
+    --marinho: #4A5D73;
+    --marinho-escuro: #384759;
+    --verde-agua: #A3D5CE;
+    --verde-agua-hover: #8CC7BF;
+    --laranja: #F6C29F;
+    --amarelo: #F7E39C;
+    --roxo: #C7B8EA;
+    --preto-suave: #2E3440;
+    --texto-sec: #5E6A7D;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+  body { background-color: var(--prata-fundo); color: var(--preto-suave); line-height: 1.5; }
+
+  #tela-login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--marinho), #5E738B);
+    padding: 1rem;
+  }
+  .login-box {
+    background: var(--prata-card);
+    padding: 2.5rem;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 10px 30px rgba(46, 52, 64, 0.25);
+  }
+  .login-logo { font-size: 1.8rem; font-weight: 800; color: var(--marinho); text-align: center; margin-bottom: 0.3rem; letter-spacing: 1px; }
+  .login-logo span { color: #68A89F; }
+
+  header {
+    background-color: var(--marinho);
+    color: #FFF;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    box-shadow: 0 2px 8px rgba(46, 52, 64, 0.12);
+  }
+  .logo { font-size: 1.5rem; font-weight: 800; letter-spacing: 1.5px; color: var(--verde-agua); }
+  .logo span { color: #FFF; }
+  nav { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  nav button {
+    background: transparent;
+    border: none;
+    color: #ECEFF4;
+    padding: 0.5rem 0.9rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s;
+  }
+  nav button:hover, nav button.ativo { background: var(--verde-agua); color: var(--preto-suave); font-weight: 700; }
+
+  main { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+  .secao { display: none; }
+  .secao.ativa { display: block; animation: fadeIn 0.2s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  h1 { color: var(--marinho); font-size: 1.75rem; margin-bottom: 0.3rem; }
+  .subtitulo { color: var(--texto-sec); margin-bottom: 1.5rem; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; }
+  .card {
+    background: var(--prata-card);
+    border: 1px solid var(--prata-borda);
+    border-radius: 12px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 6px rgba(46,52,64,0.04);
+  }
+
+  .tag { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600; margin: 0 0.3rem 0.3rem 0; }
+  .tag-laranja { background: var(--laranja); color: var(--preto-suave); }
+  .tag-amarelo { background: var(--amarelo); color: var(--preto-suave); }
+  .tag-roxo { background: var(--roxo); color: var(--preto-suave); }
+  .tag-verde { background: var(--verde-agua); color: var(--preto-suave); }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--prata-borda);
+    border-radius: 8px;
+    background: #FFF;
+    color: var(--preto-suave);
+    font-size: 0.92rem;
+    margin-bottom: 0.75rem;
+  }
+  .btn {
+    background: var(--verde-agua);
+    color: var(--preto-suave);
+    border: none;
+    padding: 0.65rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .btn:hover { background: var(--verde-agua-hover); }
+  .btn-marinho { background: var(--marinho); color: #FFF; }
+  .btn-marinho:hover { background: var(--marinho-escuro); }
+  .btn-pequeno { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
+
+  .painel-filtros {
+    background: var(--prata-card);
+    border: 1px solid var(--prata-borda);
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.8rem;
+  }
+  .painel-filtros input, .painel-filtros select { margin-bottom: 0; }
+  .busca-destaque { grid-column: 1 / -1; border: 2px solid var(--verde-agua); }
+
+  .questao-card { margin-bottom: 1.2rem; border-left: 5px solid var(--marinho); }
+  .resposta-box {
+    display: none;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #EDF7F6;
+    border-left: 4px solid var(--verde-agua);
+    border-radius: 8px;
+  }
+  .resposta-box.visivel { display: block; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--prata-card); border-radius: 12px; overflow: hidden; margin-top: 1rem; }
+  th, td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid var(--prata-borda); }
+  th { background: var(--marinho); color: #FFF; font-size: 0.85rem; }
+</style>
+</head>
+<body>
+
+<script>
+  const SUPABASE_URL = 'https://xisjtjbvgiydivgjxbcr.supabase.co';
+  const SUPABASE_ANON_KEY = 'COLE_SUA_CHAVE_ANON_PUBLIC_AQUI';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
+
+<!-- TELA DE LOGIN -->
+<div id="tela-login">
+  <div class="login-box">
+    <div class="login-logo">SALINAS<span>FLIX</span></div>
+    <p style="text-align:center; color:var(--texto-sec); font-size:0.9rem; margin-bottom:1.5rem;">Acesso restrito ao portal</p>
+    <input type="email" id="login-email" placeholder="Seu e-mail">
+    <input type="password" id="login-senha" placeholder="Sua senha">
+    <button class="btn" style="width:100%;" onclick="fazerLogin()">Entrar no Salinasflix</button>
+    <button class="btn btn-marinho" style="width:100%; margin-top:0.5rem;" onclick="entrarVisitante()">Entrar como Visitante</button>
+    <p id="login-erro" style="color:#C0392B; font-size:0.85rem; margin-top:0.8rem; text-align:center;"></p>
+  </div>
+</div>
+
+<!-- SISTEMA PRINCIPAL -->
+<div id="app-principal" style="display:none;">
+  <header>
+    <div class="logo">SALINAS<span>FLIX</span></div>
+    <nav id="menu-dinamico"></nav>
+    <div style="display:flex; align-items:center; gap:0.8rem;">
+      <span id="usuario-logado-info" style="font-size:0.85rem; color:var(--verde-agua);"></span>
+      <button class="btn btn-pequeno" style="background:var(--laranja);" onclick="sair()">Sair</button>
+    </div>
+  </header>
+
+  <main>
+    <section id="sec-home" class="secao ativa">
+      <div class="card" style="background: linear-gradient(135deg, var(--marinho), #5E738B); color:#FFF; padding:2rem; margin-bottom:1.5rem;">
+        <span class="tag tag-verde">BEM-VINDO</span>
+        <h1 style="color:#FFF; margin-top:0.4rem;">Salinasflix</h1>
+        <p style="color:#ECEFF4; max-width:650px;">Sua plataforma integrada de álbuns, banco de questões interativo e acervo de documentos indexados.</p>
+      </div>
+      <div class="grid" id="home-atalhos"></div>
+    </section>
+
+    <section id="sec-album_pessoal" class="secao">
+      <h1>Álbuns Pessoais</h1>
+      <p class="subtitulo">Registros pessoais e familiares.</p>
+      <div class="grid" id="grid-album-pessoal"></div>
+    </section>
+
+    <section id="sec-album_profissional" class="secao">
+      <h1>Álbuns Profissionais</h1>
+      <p class="subtitulo">Projetos, atuação clínica, eventos e registros profissionais.</p>
+      <div class="grid" id="grid-album-profissional"></div>
+    </section>
+
+    <section id="sec-questoes" class="secao">
+      <h1>Banco de Questões (Flashcards)</h1>
+      <p class="subtitulo">Use aspas para busca exata (ex: <strong>"débito cardíaco"</strong>) e filtre por matéria, assunto, local, ano ou bibliografia.</p>
+
+      <div class="painel-filtros">
+        <input type="text" id="q-busca" class="busca-destaque" placeholder='Pesquisar palavra-chave ou "termo exato"...' onkeyup="if(event.key==='Enter') carregarQuestoes()">
+        <select id="q-materia" onchange="carregarQuestoes()"><option value="">Todas as Matérias</option></select>
+        <select id="q-assunto" onchange="carregarQuestoes()"><option value="">Todos os Assuntos</option></select>
+        <select id="q-local" onchange="carregarQuestoes()"><option value="">Local / Banca</option></select>
+        <select id="q-ano" onchange="carregarQuestoes()"><option value="">Ano</option></select>
+        <select id="q-biblio" onchange="carregarQuestoes()"><option value="">Bibliografia</option></select>
+        <button class="btn" onclick="carregarQuestoes()">Filtrar</button>
+      </div>
+
+      <div id="lista-questoes"></div>
+    </section>
+
+    <section id="sec-pdfs" class="secao">
+      <h1>Acervo de PDFs</h1>
+      <p class="subtitulo">Pesquise por palavras-chave no título ou dentro do conteúdo dos documentos.</p>
+      <div class="painel-filtros">
+        <input type="text" id="pdf-busca" class="busca-destaque" placeholder='Pesquisar palavra-chave nos PDFs (ex: "protocolo")...' onkeyup="if(event.key==='Enter') carregarPdfs()">
+        <button class="btn" onclick="carregarPdfs()">Buscar PDF</button>
+      </div>
+      <div class="grid" id="lista-pdfs"></div>
+    </section>
+
+    <section id="sec-custom" class="secao">
+      <h1 id="custom-titulo"></h1>
+      <div class="card" id="custom-conteudo" style="white-space: pre-wrap;"></div>
+    </section>
+
+    <section id="sec-admin" class="secao">
+      <h1>Administração do Salinasflix</h1>
+      <p class="subtitulo">Gerencie páginas no ar, ordem de exibição, públicos de acesso e novos conteúdos.</p>
+
+      <div class="grid" style="margin-bottom:2rem;">
+        <div class="card">
+          <h3 style="color:var(--marinho); margin-bottom:0.8rem;">1. Criar Nova Página</h3>
+          <input type="text" id="adm-pag-titulo" placeholder="Nome da Página">
+          <textarea id="adm-pag-conteudo" rows="3" placeholder="Texto ou conteúdo da página..."></textarea>
+          <button class="btn" onclick="criarPagina()">Salvar e Publicar</button>
+        </div>
+
+        <div class="card">
+          <h3 style="color:var(--marinho); margin-bottom:0.8rem;">2. Cadastrar Nova Questão</h3>
+          <input type="text" id="adm-q-materia" placeholder="Matéria (ex: Fisiologia)">
+          <input type="text" id="adm-q-assunto" placeholder="Assunto (ex: Cardiovascular)">
+          <div style="display:flex; gap:0.5rem;">
+            <input type="text" id="adm-q-local" placeholder="Local/Banca">
+            <input type="number" id="adm-q-ano" placeholder="Ano">
+          </div>
+          <input type="text" id="adm-q-biblio" placeholder="Bibliografia (ex: Dangelo e Fattini)">
+          <textarea id="adm-q-pergunta" rows="2" placeholder="Caixa de Pergunta (Enunciado)"></textarea>
+          <textarea id="adm-q-resposta" rows="2" placeholder="Caixa de Resposta"></textarea>
+          <button class="btn" onclick="cadastrarQuestao()">Adicionar Questão</button>
+        </div>
+      </div>
+
+      <h3 style="color:var(--marinho);">Controle de Páginas (Ordem e Status)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Ordem</th>
+            <th>Página</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-admin-paginas"></tbody>
+      </table>
+    </section>
+  </main>
+</div>
+
+<script>
+  let usuarioAtual = null;
+  let gruposDoUsuario = ['Visitante'];
+  let todasPaginas = [];
+
+  async function fazerLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-senha').value;
+    const erroEl = document.getElementById('login-erro');
+    erroEl.textContent = '';
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) {
+      erroEl.textContent = 'Erro: ' + error.message;
+      return;
+    }
+    iniciarSessao(data.user.email);
+  }
+
+  function entrarVisitante() {
+    gruposDoUsuario = ['Visitante'];
+    iniciarSessao('Visitante');
+  }
+
+  async function iniciarSessao(email) {
+    usuarioAtual = email;
+    document.getElementById('tela-login').style.display = 'none';
+    document.getElementById('app-principal').style.display = 'block';
+    document.getElementById('usuario-logado-info').textContent = email;
+
+    if (email !== 'Visitante') {
+      const { data: userRow } = await sb.from('usuarios').select('id').eq('email', email).single();
+      if (userRow) {
+        const { data: uGrupos } = await sb.from('usuario_grupos').select('grupos_acesso(nome)').eq('usuario_id', userRow.id);
+        if (uGrupos && uGrupos.length > 0) {
+          gruposDoUsuario = uGrupos.map(g => g.grupos_acesso.nome);
+        }
+      }
+    }
+    await carregarPaginas();
+    await carregarQuestoes(true);
+    await carregarPdfs();
+  }
+
+  function sair() {
+    sb.auth.signOut();
+    location.reload();
+  }
+
+  async function carregarPaginas() {
+    const { data } = await sb.from('paginas').select('*, pagina_permissoes(grupos_acesso(nome))').order('ordem_exibicao', { ascending: true });
+    todasPaginas = data || [];
+    const nav = document.getElementById('menu-dinamico');
+    const tbody = document.getElementById('tabela-admin-paginas');
+    nav.innerHTML = '';
+    tbody.innerHTML = '';
+
+    const isAdmin = gruposDoUsuario.includes('Admin');
+
+    todasPaginas.forEach((p, idx) => {
+      const gruposPermitidos = (p.pagina_permissoes || []).map(pp => pp.grupos_acesso?.nome);
+      const temAcesso = isAdmin || gruposPermitidos.length === 0 || gruposPermitidos.some(g => gruposDoUsuario.includes(g));
+
+      if (p.no_ar && temAcesso) {
+        const btn = document.createElement('button');
+        btn.textContent = p.titulo;
+        btn.onclick = () => abrirSecao(p.tipo_modulo, p);
+        nav.appendChild(btn);
+      }
+
+      if (isAdmin) {
+        tbody.innerHTML += `
+          <tr>
+            <td>
+              <button class="btn btn-pequeno" onclick="reordenarPagina(${idx}, -1)">↑</button>
+              <button class="btn btn-pequeno" onclick="reordenarPagina(${idx}, 1)">↓</button>
+            </td>
+            <td><strong>${p.titulo}</strong></td>
+            <td><span class="tag ${p.no_ar ? 'tag-verde' : 'tag-laranja'}">${p.no_ar ? 'No Ar' : 'Oculta'}</span></td>
+            <td><button class="btn btn-marinho btn-pequeno" onclick="togglePagina(${p.id}, ${p.no_ar})">${p.no_ar ? 'Tirar do Ar' : 'Publicar'}</button></td>
+          </tr>`;
+      }
+    });
+
+    if (isAdmin) {
+      const btnAdm = document.createElement('button');
+      btnAdm.textContent = '⚙ Admin';
+      btnAdm.style.background = 'var(--amarelo)';
+      btnAdm.style.color = 'var(--preto-suave)';
+      btnAdm.onclick = () => abrirSecao('admin');
+      nav.appendChild(btnAdm);
+    }
+  }
+
+  function abrirSecao(modulo, pag = null) {
+    document.querySelectorAll('.secao').forEach(s => s.classList.remove('ativa'));
+    const alvo = document.getElementById('sec-' + modulo);
+    if (alvo) alvo.classList.add('ativa');
+    if (modulo === 'custom' && pag) {
+      document.getElementById('custom-titulo').textContent = pag.titulo;
+      document.getElementById('custom-conteudo').textContent = pag.conteudo_customizado || '';
+    }
+  }
+
+  async function criarPagina() {
+    const titulo = document.getElementById('adm-pag-titulo').value.trim();
+    const conteudo = document.getElementById('adm-pag-conteudo').value.trim();
+    if (!titulo) return alert('Informe o título da página.');
+    const slug = titulo.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now();
+    await sb.from('paginas').insert([{ titulo, slug, tipo_modulo: 'custom', conteudo_customizado: conteudo, ordem_exibicao: (todasPaginas.length + 1) * 10, no_ar: true }]);
+    document.getElementById('adm-pag-titulo').value = '';
+    document.getElementById('adm-pag-conteudo').value = '';
+    carregarPaginas();
+  }
+
+  async function togglePagina(id, statusAtual) {
+    await sb.from('paginas').update({ no_ar: !statusAtual }).eq('id', id);
+    carregarPaginas();
+  }
+
+  async function reordenarPagina(idx, dir) {
+    const alvo = idx + dir;
+    if (alvo < 0 || alvo >= todasPaginas.length) return;
+    const p1 = todasPaginas[idx];
+    const p2 = todasPaginas[alvo];
+    await sb.from('paginas').update({ ordem_exibicao: p2.ordem_exibicao }).eq('id', p1.id);
+    await sb.from('paginas').update({ ordem_exibicao: p1.ordem_exibicao }).eq('id', p2.id);
+    carregarPaginas();
+  }
+
+  async function carregarQuestoes(popularSelects = false) {
+    const termo = document.getElementById('q-busca').value.trim() || null;
+    const materia = document.getElementById('q-materia').value || null;
+    const assunto = document.getElementById('q-assunto').value || null;
+    const local = document.getElementById('q-local').value || null;
+    const ano = document.getElementById('q-ano').value ? parseInt(document.getElementById('q-ano').value) : null;
+    const biblio = document.getElementById('q-biblio').value || null;
+
+    const { data } = await sb.rpc('buscar_questoes', {
+      termo_busca: termo,
+      p_materia: materia,
+      p_assunto: assunto,
+      p_local: local,
+      p_ano: ano,
+      p_bibliografia: biblio
+    });
+
+    const questoes = data || [];
+    if (popularSelects && questoes.length > 0) {
+      const fill = (id, key) => {
+        const el = document.getElementById(id);
+        [...new Set(questoes.map(q => q[key]).filter(Boolean))].forEach(v => el.innerHTML += `<option value="${v}">${v}</option>`);
+      };
+      fill('q-materia', 'materia');
+      fill('q-assunto', 'assunto');
+      fill('q-local', 'local_prova');
+      fill('q-ano', 'ano_prova');
+      fill('q-biblio', 'bibliografia');
+    }
+
+    document.getElementById('lista-questoes').innerHTML = questoes.map(q => `
+      <div class="card questao-card">
+        <div>
+          <span class="tag tag-laranja">${q.materia}</span>
+          <span class="tag tag-amarelo">${q.assunto}</span>
+          ${q.local_prova ? `<span class="tag tag-roxo">${q.local_prova} ${q.ano_prova || ''}</span>` : ''}
+          ${q.bibliografia ? `<span class="tag tag-verde">${q.bibliografia}</span>` : ''}
+        </div>
+        <p style="margin:0.8rem 0; font-weight:500;">${q.enunciado}</p>
+        ${q.midia_url && q.tipo_midia === 'imagem' ? `<img src="${q.midia_url}" style="max-width:100%; border-radius:8px; margin-bottom:0.8rem;">` : ''}
+        <button class="btn btn-pequeno" onclick="document.getElementById('r-${q.id}').classList.toggle('visivel')">Ver / Ocultar Resposta</button>
+        <div id="r-${q.id}" class="resposta-box"><strong>Resposta:</strong> ${q.resposta}</div>
+      </div>
+    `).join('') || '<p>Nenhuma questão encontrada.</p>';
+  }
+
+  async function cadastrarQuestao() {
+    const payload = {
+      materia: document.getElementById('adm-q-materia').value.trim(),
+      assunto: document.getElementById('adm-q-assunto').value.trim(),
+      local_prova: document.getElementById('adm-q-local').value.trim() || null,
+      ano_prova: parseInt(document.getElementById('adm-q-ano').value) || null,
+      bibliografia: document.getElementById('adm-q-biblio').value.trim() || null,
+      enunciado: document.getElementById('adm-q-pergunta').value.trim(),
+      resposta: document.getElementById('adm-q-resposta').value.trim()
+    };
+    if (!payload.materia || !payload.enunciado || !payload.resposta) return alert('Preencha Matéria, Pergunta e Resposta.');
+    await sb.from('questoes').insert([payload]);
+    alert('Questão cadastrada com sucesso!');
+    carregarQuestoes(true);
+  }
+
+  async function carregarPdfs() {
+    const termo = document.getElementById('pdf-busca').value.trim() || null;
+    const { data } = await sb.rpc('buscar_pdfs', { termo_busca: termo });
+    const pdfs = data || [];
+    document.getElementById('lista-pdfs').innerHTML = pdfs.map(p => `
+      <div class="card">
+        <span class="tag tag-roxo">${p.categoria || 'Documento'}</span>
+        <h3 style="margin:0.5rem 0;">${p.titulo}</h3>
+        <p style="font-size:0.85rem; color:var(--texto-sec); margin-bottom:1rem;">${p.descricao || ''}</p>
+        <a href="${p.arquivo_url}" target="_blank" class="btn btn-marinho btn-pequeno" style="text-decoration:none;">Abrir PDF</a>
+      </div>
+    `).join('') || '<p>Nenhum PDF encontrado.</p>';
+  }
+</script>
+</body>
+</html>
